@@ -2,12 +2,24 @@ import pandas as pd
 
 
 def cal_factors(df: pd.DataFrame, factors):
+    """
+    因子计算
+    :param df:
+    :param factors:
+    :return:
+    """
     for factor in factors:
         df = _cal_factor(df, factor)
     return df
 
 
 def cal_ranks(df: pd.DataFrame, factors):
+    """
+    排名计算
+    :param df:
+    :param factors:
+    :return:
+    """
     df = df.copy()
     df.loc[:, 'rank_all'] = 0.0
     for factor in factors:
