@@ -1,11 +1,17 @@
-import pandas as pd
+import time
+import traceback
 
+import pandas as pd
+import schedule
+
+from commons.dingding import send_dingding_msg
 from commons.market import get_hist_etf_by_codes
 from commons.util import cal_factors, cal_ranks
 
 # 全局设置
 pd.set_option('display.max_columns', None)
 context = dict()
+debug = True
 
 
 def before_run():
@@ -14,7 +20,6 @@ def before_run():
     :return:
     """
     context.update({
-
         'etf_pool': [  # 配置ETF池(后续会更新写法)
             'sh518880',  # 黄金ETF
             'sh513100',  # 纳指100
@@ -45,16 +50,19 @@ def running():
     df_select = df.head(1)
     context.update({
         'select_etf': {
-            'date': df_select.at[0, 'date'],
+            'date': df_select.at[0, 'date'].strftime('%Y-%m-%d'),
             'symbol': df_select.at[0, 'symbol'],
             'close': df_select.at[0, 'close'],
         }
     })
-    print(context)
 
 
 def after_run():
-    pass
+    select_etf = context['select_etf']
+    msg = f"今日选择ETF：{select_etf['symbol']}\n" \
+          f"最新日期：{select_etf['date']}\n" \
+          f"收盘价为{select_etf['close']}\n"
+    send_dingding_msg(msg)
 
 
 def run():
@@ -64,4 +72,14 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    schedule.every().day.at("09:30").do(run)
+    try:
+        while True:
+            if debug:
+                schedule.run_all(1)
+            else:
+                schedule.run_pending()
+            time.sleep(60)
+    except BaseException as e:
+        send_dingding_msg(str(e))
+        time.sleep(60)
